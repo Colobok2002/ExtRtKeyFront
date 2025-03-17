@@ -12,7 +12,7 @@ export default class ApiConnector {
     constructor(routUrl: string) {
         // TODO: API бэка нужно получить из env-переменных (Vite)
         // https://vite.dev/guide/env-and-mode
-        const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+        const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
         this.api = axios.create({
             baseURL: `${baseUrl}/${routUrl}/`,

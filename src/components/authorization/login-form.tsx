@@ -1,9 +1,10 @@
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import InputCode, { InputPhone } from '@/components/ui/input'
+import { InputCode, InputPhone, Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { useState } from 'react'
+import ApiConnector from '@/utils/ApiConnector'
 
 
 
@@ -14,30 +15,51 @@ export function LoginForm({
 }: React.ComponentProps<'div'>) {
 
   const [loginValid, setLoginValid] = useState<boolean>(false)
-  // const [sendCaptcha, setSendCaptcha] = useState<boolean>(true)
+  const [sendCaptcha, setSendCaptcha] = useState<boolean>(false)
+  const [captchaImage, setCaptchaImage] = useState<string | null>(null)
+  const [captchaId, setCaptchaId] = useState<string | null>(null)
   const [sendCode, setSendCode] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
 
-  const [_, setCode] = useState<string>("")
+  const [code, setCode] = useState<string>("")
+
+  const api_con = new ApiConnector("auth")
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    // Тут будет логика с бэка
-    // Возможны два варианта 
-    // 1 успешно запросит код его нужно принять и опять отправить запрос на бэк
-    // 2 Понадобится капча , я отдам картинку и id капчи ее нужно будет скинуть на бэк и если успешно принять код
-    
+    // TODO: Сейчас токен сохраняется в local Storage
+
     e.preventDefault();
 
-    // const form = e.currentTarget;
+    const form = e.currentTarget;
 
-    // const phone = form.elements.namedItem('phone') as HTMLInputElement;
-    // const captcha = form.elements.namedItem('captcha') as HTMLInputElement | null;
+    const phone = form.elements.namedItem('phone') as HTMLInputElement;
+    const captcha = form.elements.namedItem('captcha') as HTMLInputElement | null;
+    setLoading(true)
+    if (!sendCode) {
+      api_con.post("request_code", { "login": phone.value.replace(/\D/g, ""), "captcha_code": captcha?.value, "captcha_id": captchaId }).then(response => {
+        toast(response.message);
 
-    // console.log(phone.value);
-
-    setSendCode(true)
-
-
-    toast('Упс нужно пойти капчу');
+        if (response.status == "Good") {
+          setSendCode(true)
+        } else {
+          setSendCaptcha(true)
+          setCaptchaImage(response.data.url)
+          setCaptchaId(response.data.id)
+        }
+        setLoading(false)
+      })
+    } else {
+      setSendCaptcha(false)
+      api_con.post("request_token", { "login": phone.value.replace(/\D/g, ""), "code": code }).then(response => {
+        console.log(response)
+        toast(response.message);
+        if (response.status == "Good") {
+          setSendCode(true)
+          api_con.refreshToken(response.data.token)
+        }
+        setLoading(false)
+      })
+    }
   };
 
   return (
@@ -57,13 +79,25 @@ export function LoginForm({
                 setLoginValid={setLoginValid}
               />
             </div>
+            {sendCaptcha && (
+              <div className='grid gap-3'>
+                <Label htmlFor='captcha'>Капча</Label>
+                <img src={captchaImage ? captchaImage : ""} style={{ width: "100%" }} alt='captcha' />
+                <Input
+                  id='captcha'
+                  type='texts'
+                  placeholder='Введите код с картинки'
+                ></Input>
+
+              </div>
+            )}
             {sendCode && (
               <div className='grid gap-3'>
                 <Label htmlFor='login'>Полученный код</Label>
-                <InputCode setCode={setCode} />
+                <InputCode id='code' setCode={setCode} />
               </div>
             )}
-            <Button type='submit' className='w-full' disabled={!loginValid}>
+            <Button type='submit' className='w-full' disabled={!loginValid || loading}>
               Login
             </Button>
           </div>
