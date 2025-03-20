@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
-import LoginPage from './app/login/page'
 import { NetworkChecker } from './utils/NetworkChecker'
 import { ModeToggle } from './components/mode-toggle'
+import AppRoutes from './AppRoutes'
 
 function App() {
   useEffect(() => {
@@ -13,7 +13,7 @@ function App() {
       <div className='absolute right-4 top-4'>
         <ModeToggle />
       </div>
-      <LoginPage />
+      <AppRoutes />
     </>
   )
 }
