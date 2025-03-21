@@ -6,7 +6,10 @@ import { useSelector } from 'react-redux'
 import { RootState } from './redux';
 import { useEffect } from 'react';
 import { PUBLIC_ROUTES } from './Const';
+import { DropdownMenu } from './components/ui/dropdown-menu';
+import MobileMenu from './components/ui/mobile-menu';
 
+// import { MobileMenu} from "./components/ui/mobile-menu";
 
 
 const AppRoutes = () => {
@@ -34,10 +37,15 @@ const AppRoutes = () => {
   }
 
   return (
-    <Routes>
-      <Route index path="/" element={<MainPage />} />
-      <Route path="/login" element={<LoginPage />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route index path="/" element={<MainPage />} />
+        <Route path="/login" element={<LoginPage />} />
+      </Routes>
+      <DropdownMenu></DropdownMenu>
+
+      <MobileMenu></MobileMenu>
+    </>
   );
 };
 
