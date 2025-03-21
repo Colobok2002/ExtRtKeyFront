@@ -1,10 +1,27 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-
 /**
  * :mod:`ApiConnector` -- Класс для работы с API
  * ===================================
  * .. moduleauthor:: Ilya Barinov <i-barinov@it-serv.ru>
  */
+
+import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import { getToken, setToken } from "./TokenProcessing";
+
+interface BaseResponse<T = any> {
+    status?: string | null;
+    message?: string | null;
+    data?: T;
+}
+
+interface GoodResponse<T = any> extends BaseResponse<T> {
+    status: "Good";
+}
+
+interface BadResponse<T = any> extends BaseResponse<T> {
+    status: "Bad";
+}
+
+export type APIResponse<T = any> = GoodResponse<T> | BadResponse<T>;
 
 export default class ApiConnector {
     private api: AxiosInstance;
@@ -23,7 +40,7 @@ export default class ApiConnector {
 
         // Автоматическое добавление токена во все запросы
         this.api.interceptors.request.use((config) => {
-            const token = this.getToken();
+            const token = getToken();
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
             }
@@ -31,16 +48,11 @@ export default class ApiConnector {
         });
     }
 
-    private getToken(): string | null {
-        // TODO: Пока localStorage, в будущем можно хранить в cookies
-        return localStorage.getItem("authToken");
-    }
+    // private clearToken(): void {
+    //     Cookies.remove(this.TOKEN_NAME);
+    // }
 
-    private setToken(token: string) {
-        localStorage.setItem("authToken", token);
-    }
-
-    private async _request<T = any>(
+    private async _request<T extends APIResponse = APIResponse>(
         method: "GET" | "POST" | "PUT" | "DELETE",
         endpoint: string,
         data?: any
@@ -52,7 +64,7 @@ export default class ApiConnector {
                 data,
             };
 
-            const response: AxiosResponse<T> = await this.api.request(config);
+            const response = await this.api.request<T>(config);
             return response.data;
         } catch (error: any) {
             console.error("API Request Error:", {
@@ -64,11 +76,11 @@ export default class ApiConnector {
         }
     }
 
+
     public async refreshToken(newToken: string): Promise<void> {
         try {
-
             if (newToken) {
-                this.setToken(newToken);
+                setToken(newToken);
                 this.api.defaults.headers["Authorization"] = `Bearer ${newToken}`;
                 console.log("Token successfully refreshed.");
             } else {
@@ -79,23 +91,24 @@ export default class ApiConnector {
             // TODO: На тест нужно ли чистить их
             // localStorage.removeItem("authToken");
             // localStorage.removeItem("refreshToken");
+            // this.clearToken()
             throw error;
         }
     }
 
-    public get<T = any>(endpoint: string): Promise<T> {
+    public get<T extends APIResponse = APIResponse>(endpoint: string): Promise<T> {
         return this._request("GET", endpoint);
     }
 
-    public post<T = any>(endpoint: string, body: any): Promise<T> {
+    public post<T extends APIResponse = APIResponse>(endpoint: string, body: any): Promise<T> {
         return this._request("POST", endpoint, body);
     }
 
-    public put<T = any>(endpoint: string, body: any): Promise<T> {
+    public put<T extends APIResponse = APIResponse>(endpoint: string, body: any): Promise<T> {
         return this._request("PUT", endpoint, body);
     }
 
-    public delete<T = any>(endpoint: string): Promise<T> {
+    public delete<T extends APIResponse = APIResponse>(endpoint: string): Promise<T> {
         return this._request("DELETE", endpoint);
     }
 }

@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import ApiConnector from '@/utils/ApiConnector'
+import { useNavigate } from 'react-router'
 
 
 
@@ -13,6 +14,8 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
+
+  const navigate = useNavigate();
 
   const [loginValid, setLoginValid] = useState<boolean>(false)
   const [sendCaptcha, setSendCaptcha] = useState<boolean>(false)
@@ -26,8 +29,6 @@ export function LoginForm({
   const api_con = new ApiConnector("auth")
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    // TODO: Сейчас токен сохраняется в local Storage
-
     e.preventDefault();
 
     const form = e.currentTarget;
@@ -36,7 +37,7 @@ export function LoginForm({
     const captcha = form.elements.namedItem('captcha') as HTMLInputElement | null;
     setLoading(true)
     if (!sendCode) {
-      api_con.post("request_code", { "login": phone.value.replace(/\D/g, ""), "captcha_code": captcha?.value, "captcha_id": captchaId }).then(response => {
+      api_con.post("request-code", { "login": phone.value.replace(/\D/g, ""), "captcha_code": captcha?.value, "captcha_id": captchaId }).then(response => {
         toast(response.message);
 
         if (response.status == "Good") {
@@ -46,19 +47,18 @@ export function LoginForm({
           setCaptchaImage(response.data.url)
           setCaptchaId(response.data.id)
         }
-        setLoading(false)
-      })
+
+      }).finally(() => setLoading(false))
     } else {
       setSendCaptcha(false)
-      api_con.post("request_token", { "login": phone.value.replace(/\D/g, ""), "code": code }).then(response => {
-        console.log(response)
+      api_con.post("request-token", { "login": phone.value.replace(/\D/g, ""), "code": code }).then(response => {
         toast(response.message);
         if (response.status == "Good") {
           setSendCode(true)
           api_con.refreshToken(response.data.token)
+          navigate("/", { replace: true });
         }
-        setLoading(false)
-      })
+      }).finally(() => setLoading(false))
     }
   };
 

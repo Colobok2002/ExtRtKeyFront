@@ -1,13 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 interface UserState {
-  jwt_token: string | null
   isAuthenticated: boolean
+  isLoading: boolean;
 }
 
 const initialState: UserState = {
-  jwt_token: null,
   isAuthenticated: false,
+  isLoading: true
 }
 
 export const userSlice = createSlice({
@@ -15,19 +15,20 @@ export const userSlice = createSlice({
   initialState,
   reducers: {
     setUser: (
-      state,
-      action: PayloadAction<{ jwt_token: string }>
+      state
     ) => {
-      const { jwt_token } = action.payload
-      state.jwt_token = jwt_token
       state.isAuthenticated = true
+      state.isLoading = false;
     },
     clearUser: (state) => {
-      state.jwt_token = null
       state.isAuthenticated = false
+      state.isLoading = false;
+    },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.isLoading = action.payload;
     },
   },
 })
 
-export const { setUser, clearUser } = userSlice.actions
+export const { setUser, clearUser, setLoading } = userSlice.actions
 export default userSlice.reducer

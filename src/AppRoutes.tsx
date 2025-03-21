@@ -1,12 +1,11 @@
-// src/components/Routes.tsx
-import { Routes, Route, useLocation, Navigate, useNavigate } from 'react-router';
+import { Routes, Route, useLocation, useNavigate } from 'react-router';
 
-//Components
 import LoginPage from './app/login/page';
 import MainPage from './app/main/page';
 import { useSelector } from 'react-redux'
 import { RootState } from './redux';
 import { useEffect } from 'react';
+import { PUBLIC_ROUTES } from './Const';
 
 
 
@@ -16,14 +15,15 @@ const AppRoutes = () => {
   const location = useLocation()
   const navigate = useNavigate();
 
-  // INFO в будущем пути для временного доступа
-  const publicRoutes = ['/test_page']
-
   useEffect(() => {
-    if (!user.isAuthenticated && !publicRoutes.includes(location.pathname)) {
+    console.log("Loading:", user.isLoading, "Auth:", user.isAuthenticated);
+
+    if (user.isLoading) return;
+
+    if (!user.isAuthenticated && !PUBLIC_ROUTES.includes(location.pathname)) {
       navigate("/login", { replace: true });
     }
-  }, [user.isAuthenticated, location.pathname]);
+  }, [user.isAuthenticated, user.isLoading, location.pathname]);
 
   if (!user.isAuthenticated) {
     return (
